@@ -1,22 +1,20 @@
 import logo from './logo.svg';
 import './App.css';
+import YouTubeVideo from './YoutubeVideo';
 
 function App() {
+  const handleButtonClick = () => {
+    const userInput = prompt("Escriu el teu nom: ");
+    alert("Has escrit: " + userInput);
+    console.log("Hola " + userInput);
+  };
+
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        <button onClick={handleButtonClick}>Proba el Prompt</button>
+        <YouTubeVideo />
       </header>
     </div>
   );
