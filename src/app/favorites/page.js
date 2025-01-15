@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { db, auth } from '../firebaseConfig'; // Importar Firebase
-import { doc, getDoc, setDoc, arrayRemove, arrayUnion } from 'firebase/firestore'; // Para obtener y actualizar datos en Firestore
-import FSection from '../FSection';
-import VideoCard from '../CartaDeVideo'; // Importar VideoCard para mostrar los videos
-import Icon from 'react-native-vector-icons/FontAwesome'; // Para los íconos de corazón
-import { LinearGradient } from 'expo-linear-gradient'; // Importa LinearGradient
+'use client';
 
-export default function FavouriteScreen({ navigation }) {
+import React, { useState, useEffect } from 'react';
+import { db, auth } from '../lib/firebaseConfig'; // Asegúrate de importar la configuración de Firebase
+import { doc, getDoc, setDoc, arrayRemove, arrayUnion } from 'firebase/firestore'; // Para obtener y actualizar datos en Firestore
+import VideoCard from '../components/VideoCard'; // Asegúrate de tener este componente
+import { useRouter } from 'next/navigation';
+
+export default function FavouriteScreen() {
   const [favoriteVideos, setFavoriteVideos] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
   
   const currentUser = auth.currentUser;
+  const router = useRouter();  // Aquí estamos usando useRouter()
 
   // Función para obtener los videos favoritos del usuario
   useEffect(() => {
@@ -65,49 +65,62 @@ export default function FavouriteScreen({ navigation }) {
     }
   };
 
-  const handlePress = (id) => {
-    console.log("Han clicado al botón " + id);
-    if (id == 1) {
-      navigation.navigate("listScreen");
-    } else if (id == 2) {
-      navigation.navigate("favouriteScreen");
-    } else if (id == 3) {
-      navigation.navigate("userScreen");
-    }
-  };
-
   return (
-    <View style={{ flex: 1 }}>
+    <div style={{ padding: '20px' }}>      
+    {/* Barra de navegación superior con botones */}
+      <nav style={{
+        backgroundColor: '#3498db',
+        padding: '10px 20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
+        <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold' }}>VideoListApp</div>
+        <div>
+          <button
+            onClick={() => router.push('/dashboard')} // Redirige a la lista de videos
+            style={{ marginRight: '10px', padding: '10px', background: 'none', border: '1px solid white', color: 'white', cursor: 'pointer' }}
+          >
+            Inicio
+          </button>
+          <button
+            onClick={() => router.push('/perfil')} // Redirige a perfil
+            style={{ padding: '10px', background: 'none', border: '1px solid white', color: 'white', cursor: 'pointer' }}
+          >
+            Perfil
+          </button>
+        </div>
+      </nav>
+
       {/* Sección del título con gradiente */}
-      <LinearGradient
-        colors={['#3498db', '#2980b9', '#1abc9c']}  // Definimos el gradiente azul-verde
-        style={{ padding: 20, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: '#2c3e50' }}
-      >
-        <Text style={{
-          fontSize: 28,              // Aumentamos el tamaño del texto
-          fontWeight: 'bold',        // Hacemos el texto en negrita
-          color: '#fff',             // Cambiamos el color a blanco
-          textAlign: 'center',
-          paddingBottom: 10,
-          marginTop:30,
+      <div style={{
+        background: 'linear-gradient(to right, #3498db, #2980b9, #1abc9c)', // Gradiente azul-verde
+        padding: '20px',
+        textAlign: 'center',
+        borderBottom: '2px solid #2c3e50',
+      }}>
+        <h1 style={{
+          fontSize: '28px',
+          fontWeight: 'bold',
+          color: '#fff',
+          paddingBottom: '10px',
+          marginTop: '30px',
         }}>
           VideoListApp
-        </Text>
-        <Text style={{
-          fontSize: 20,              // Tamaño más grande para mejor legibilidad
-          color: '#fff',             // Mantener el color blanco
-          textAlign: 'center',
+        </h1>
+        <h2 style={{
+          fontSize: '20px',
+          color: '#fff',
         }}>
           Lista de Favoritos
-        </Text>
-      </LinearGradient>
+        </h2>
+      </div>
 
       {/* Lista de videos favoritos */}
-      <View style={{ flex: 7, width: '100%' }}>
-        <ScrollView>
+      <div style={{ marginBottom: '20px' }}>
           {favoriteVideos.length > 0 ? (
             favoriteVideos.map((video, index) => (
-              <View key={index} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ marginBottom: '20px' }}>
                 {/* VideoCard muestra el contenido del video */}
                 <VideoCard
                   videoUrl={video.url}
@@ -117,18 +130,12 @@ export default function FavouriteScreen({ navigation }) {
                   onToggleFavorite={() => toggleFavorite(video)}  // Usamos esta función de toggle para los favoritos
                   isFavorite={favoriteVideos.some(fav => fav.url === video.url)}  // Comprobamos si el video está en favoritos
                 />
-              </View>
+              </div>
             ))
           ) : (
-            <Text style={{ textAlign: 'center', marginTop: 20 }}>No tienes videos favoritos.</Text>
+            <p style={{ textAlign: 'center', marginTop: '20px' }}>No tienes videos favoritos.</p>
           )}
-        </ScrollView>
-      </View>
-
-      {/* Sección inferior */}
-      <View style={{ flex: 0.9, justifyContent: 'center', alignItems: 'center', padding: 0 }}>
-        <FSection currentSection={2} onPress={handlePress} />
-      </View>
-    </View>
+        </div>
+    </div>
   );
 }
