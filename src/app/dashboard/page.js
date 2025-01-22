@@ -68,9 +68,58 @@ export default function Dashboard() {
     fetchVideosFromList();
   }, [selectedList]);
 
-  const handleListChange = (value) => {
-    setSelectedList(value); // Actualizar selectedList
+  // Actualizar `handleListChange` para refrescar las listas
+const handleListChange = async (value) => {
+  setSelectedList(value); // Actualizar selectedList
+
+  // Ahora, actualizamos la lista de videos
+  const fetchVideosFromList = async () => {
+    if (!value) return;
+
+    try {
+      const listDocRef = doc(db, 'userSaves', currentUser.uid, 'lists', value);
+      const listDocSnap = await getDoc(listDocRef);
+
+      if (listDocSnap.exists()) {
+        const listData = listDocSnap.data();
+        const videos = listData.videos || []; // Obtener los videos de la lista
+        setUserVideos(videos); // Actualizar videos con los nuevos datos
+      } else {
+        setUserVideos([]);
+        setErrorMsg('No se encontraron videos en esta lista.');
+      }
+    } catch (error) {
+      console.error('Error al obtener los videos:', error);
+      setErrorMsg('Hubo un error al cargar los videos de la lista.');
+    }
   };
+
+  fetchVideosFromList();
+};
+
+// Actualiza las listas de usuario cuando cambian
+useEffect(() => {
+  if (currentUser) {
+    const fetchUserData = async () => {
+      try {
+        const listsCollectionRef = collection(db, 'userSaves', currentUser.uid, 'lists');
+        const listsSnapshot = await getDocs(listsCollectionRef);
+
+        if (!listsSnapshot.empty) {
+          const lists = listsSnapshot.docs.map((doc) => doc.id); // Obtener los nombres de las listas
+          setUserLists(lists);
+        } else {
+          setUserLists([]);
+        }
+      } catch (error) {
+        console.error('Error al obtener las listas:', error);
+        setErrorMsg('Hubo un error al cargar las listas.');
+      }
+    };
+
+    fetchUserData();
+  }
+}, [currentUser]);  // Solo se ejecuta una vez cuando el usuario cambia
 
   const toggleFavorite = async (video) => {
     const userDocRef = doc(db, 'userSaves', currentUser.uid);
@@ -227,6 +276,7 @@ export default function Dashboard() {
               onToggleFavorite={() => toggleFavorite(video)}
               isFavorite={favoriteVideos.some((fav) => fav.url === video.url)}
               selectedList={selectedList}
+              reloadList={() => handleListChange(selectedList)}  // Pasa la función para recargar la lista
             />
           ))
         ) : (

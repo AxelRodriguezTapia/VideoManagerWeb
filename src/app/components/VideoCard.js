@@ -4,7 +4,7 @@ import { doc, updateDoc, arrayRemove } from 'firebase/firestore';
 import { db, auth } from '../lib/firebaseConfig'; // Asegúrate de tener la configuración de Firebase
 
 // Componente VideoCard para mostrar el video
-export default function VideoCard({ videoUrl, title, description, createdAt, onToggleFavorite, isFavorite, videoId, selectedList }) {
+export default function VideoCard({ videoUrl, title, description, createdAt, onToggleFavorite, isFavorite, videoId, selectedList,reloadList }) {
   const isYouTubeLong = videoUrl.includes('youtube.com/watch'); // URL larga de YouTube
   const isYouTubeShort = videoUrl.includes('youtu.be/'); // URL corta de YouTube
   const isInstagram = videoUrl.includes('instagram.com/p');
@@ -43,6 +43,10 @@ const handleDeleteVideo = async () => {
       });
 
       alert('¡Video eliminado correctamente!');
+      // Llamamos a reloadList para recargar la lista de videos
+      if (reloadList) {
+        reloadList();  // Ejecuta la función que recarga la lista de videos
+      }
     } catch (error) {
       console.error('Error al eliminar el video: ', error);
       alert('Hubo un error al eliminar el video.');
