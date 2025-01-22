@@ -1,35 +1,33 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { auth } from '../lib/firebaseConfig'; // Importa la configuración de Firebase
+import { auth } from '../lib/firebaseConfig'; 
 import { useRouter } from 'next/navigation';
 
 export default function UserScreen() {
-  const [userEmail, setUserEmail] = useState(null);  // Almacenar el correo electrónico del usuario
-  const [loading, setLoading] = useState(true);  // Estado de carga
-  const router = useRouter();  // Usar router para la navegación
+  const [userEmail, setUserEmail] = useState(null); 
+  const [loading, setLoading] = useState(true); 
+  const [menuOpen, setMenuOpen] = useState(false); // Estado del menú desplegable
+  const router = useRouter();
 
-  // Función de logout
   const handleLogout = () => {
     auth.signOut().then(() => {
       alert('Has cerrado sesión correctamente');
-      router.push('/login');  // Redirige a la pantalla de inicio de sesión
+      router.push('/login'); 
     }).catch((error) => {
       console.error('Error al cerrar sesión:', error);
       alert('Hubo un error al cerrar sesión');
     });
   };
 
-  // Obtención del correo electrónico del usuario
   useEffect(() => {
     const currentUser = auth.currentUser;
     if (currentUser) {
-      setUserEmail(currentUser.email || 'No disponible');  // Establece el correo del usuario
+      setUserEmail(currentUser.email || 'No disponible');
     }
-    setLoading(false);  // Finaliza la carga
+    setLoading(false);
   }, []);
 
-  // Cargar mensaje de "Cargando..." mientras el estado de usuario se obtiene
   if (loading) {
     return (
       <div style={styles.loadingContainer}>
@@ -39,8 +37,8 @@ export default function UserScreen() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      {/* Barra de navegación con botones */}
+    <div style={{ padding: '0px' }}>
+      {/* Barra de navegación con menú desplegable */}
       <nav style={{
         backgroundColor: '#3498db',
         padding: '10px 20px',
@@ -49,19 +47,67 @@ export default function UserScreen() {
         alignItems: 'center',
       }}>
         <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold' }}>VideoListApp</div>
-        <div>
+        <div className="menu">
           <button
-            onClick={() => router.push('/dashboard')} // Redirige al listado de videos
-            style={{ marginRight: '10px', padding: '10px', background: 'none', border: '1px solid white', color: 'white', cursor: 'pointer' }}
+            onClick={() => setMenuOpen(!menuOpen)} // Alternar visibilidad del menú
+            style={{
+              padding: '10px',
+              background: 'none',
+              border: '1px solid white',
+              color: 'white',
+              cursor: 'pointer',
+            }}
           >
-            Inicio
+            ☰
           </button>
-          <button
-            onClick={() => router.push('/favorites')} // Redirige a favoritos
-            style={{ marginRight: '10px', padding: '10px', background: 'none', border: '1px solid white', color: 'white', cursor: 'pointer' }}
-          >
-            Favoritos
-          </button>
+          {menuOpen && (
+            <div style={{
+              position: 'absolute',
+              top: '50px',
+              right: '20px',
+              backgroundColor: '#3498db',
+              border: '1px solid white',
+              borderRadius: '5px',
+              zIndex: 100,
+            }}>
+              <button
+                onClick={() => {
+                  router.push('/dashboard');
+                  setMenuOpen(false);
+                }}
+                style={{
+                  display: 'block',
+                  padding: '10px',
+                  color: 'white',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                }}
+              >
+                Inicio
+              </button>
+              <button
+                onClick={() => {
+                  router.push('/favorites');
+                  setMenuOpen(false);
+                }}
+                style={{
+                  display: 'block',
+                  padding: '10px',
+                  color: 'white',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                }}
+              >
+                Favoritos
+              </button>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -77,14 +123,14 @@ export default function UserScreen() {
         <h2 style={{ fontSize: '20px' }}>Bienvenido, {userEmail}</h2>
       </div>
 
-      {/* Sección del contenido principal */}
+      {/* Sección principal */}
       <div style={{ flex: 1, padding: '20px' }}>
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <button
             onClick={handleLogout}
             style={{
               padding: '10px 20px',
-              backgroundColor: '#e74c3c',  // Rojo para resaltar el logout
+              backgroundColor: '#e74c3c',
               color: 'white',
               border: 'none',
               fontSize: '16px',
@@ -96,9 +142,9 @@ export default function UserScreen() {
         </div>
       </div>
 
-      {/* Sección inferior */}
+      {/* Pie de página o sección adicional */}
       <div style={{ flex: 0.9, justifyContent: 'center', alignItems: 'center', padding: '20px' }}>
-        {/* Puedes agregar más opciones o componentes aquí, si lo deseas */}
+        {/* Opciones o contenido adicional */}
       </div>
     </div>
   );

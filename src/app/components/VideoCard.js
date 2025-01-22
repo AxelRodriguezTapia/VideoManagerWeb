@@ -1,8 +1,10 @@
 import React from 'react';
-import { FaHeart, FaRegHeart } from 'react-icons/fa'; // Usamos FontAwesome para los íconos en la web
+import { FaHeart, FaRegHeart, FaTrashAlt } from 'react-icons/fa'; // Usamos FontAwesome para los íconos en la web
+import { doc, updateDoc, arrayRemove } from 'firebase/firestore';
+import { db, auth } from '../lib/firebaseConfig'; // Asegúrate de tener la configuración de Firebase
 
 // Componente VideoCard para mostrar el video
-export default function VideoCard({ videoUrl, title, description, createdAt, onToggleFavorite, isFavorite }) {
+export default function VideoCard({ videoUrl, title, description, createdAt, onToggleFavorite, isFavorite, videoId, selectedList }) {
   const isYouTubeLong = videoUrl.includes('youtube.com/watch'); // URL larga de YouTube
   const isYouTubeShort = videoUrl.includes('youtu.be/'); // URL corta de YouTube
   const isInstagram = videoUrl.includes('instagram.com/p');
@@ -21,6 +23,32 @@ export default function VideoCard({ videoUrl, title, description, createdAt, onT
     ? `https://www.tiktok.com/embed/${videoUrl.split('/video/')[1]}`
     : null;
 
+ // Función para eliminar el video con confirmación
+const handleDeleteVideo = async () => {
+  if (!selectedList) {
+    alert('No se seleccionó ninguna lista.');
+    return;
+  }
+
+  // Mostrar ventana de confirmación
+  const confirmDelete = window.confirm('¿Estás seguro de que deseas eliminar este video?');
+
+  if (confirmDelete) {
+    try {
+      const listDocRef = doc(db, 'userSaves', auth.currentUser.uid, 'lists', selectedList);
+      
+      // Elimina el video del array de la lista en Firebase
+      await updateDoc(listDocRef, {
+        videos: arrayRemove({ url: videoUrl, title, description, createdAt }),
+      });
+
+      alert('¡Video eliminado correctamente!');
+    } catch (error) {
+      console.error('Error al eliminar el video: ', error);
+      alert('Hubo un error al eliminar el video.');
+    }
+  }
+};
   return (
     <div style={{ margin: '20px', position: 'relative' }}>
       {/* Botón de favorito en la esquina superior derecha */}
@@ -29,7 +57,7 @@ export default function VideoCard({ videoUrl, title, description, createdAt, onT
         style={{
           position: 'absolute',
           top: '10px',
-          right: '10px',
+          right: '50px',
           background: 'transparent',
           border: 'none',
           cursor: 'pointer',
@@ -40,6 +68,21 @@ export default function VideoCard({ videoUrl, title, description, createdAt, onT
         ) : (
           <FaRegHeart size={30} color="gray" />
         )}
+      </button>
+
+      {/* Botón de papelera para eliminar el video */}
+      <button
+        onClick={handleDeleteVideo}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+        }}
+      >
+        <FaTrashAlt size={30} color="red" />
       </button>
 
       {/* Título y descripción */}

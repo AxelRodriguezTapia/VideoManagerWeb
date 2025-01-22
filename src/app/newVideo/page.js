@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { db, auth } from '../lib/firebaseConfig'; // Asegúrate de importar la configuración de Firebase
+import { db, auth } from '../lib/firebaseConfig';
 import { doc, setDoc, updateDoc, arrayUnion, collection, getDocs } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
@@ -12,6 +12,7 @@ export default function NewVideoPage() {
   const [selectedList, setSelectedList] = useState('');
   const [newListName, setNewListName] = useState('');
   const [userLists, setUserLists] = useState([]);
+  const [menuOpen, setMenuOpen] = useState(false); // Estado del menú desplegable
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -23,7 +24,7 @@ export default function NewVideoPage() {
         if (currentUser) {
           const listsCollectionRef = collection(db, 'userSaves', currentUser.uid, 'lists');
           const listsSnapshot = await getDocs(listsCollectionRef);
-          
+
           if (!listsSnapshot.empty) {
             const lists = listsSnapshot.docs.map(doc => doc.id);
             setUserLists(lists);
@@ -82,7 +83,7 @@ export default function NewVideoPage() {
       });
 
       alert('¡Video guardado correctamente!');
-      router.push('/dashboard'); // Redirige al dashboard (o cualquier otra página)
+      router.push('/dashboard');
     } catch (error) {
       console.error('Error al guardar el video: ', error);
       alert('Hubo un error al guardar el video.');
@@ -92,8 +93,8 @@ export default function NewVideoPage() {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      {/* Barra de navegación superior */}
+    <div style={{ padding: '0px' }}>
+      {/* Barra de navegación con menú desplegable */}
       <nav style={{
         backgroundColor: '#3498db',
         padding: '10px 20px',
@@ -102,19 +103,67 @@ export default function NewVideoPage() {
         alignItems: 'center',
       }}>
         <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold' }}>VideoListApp</div>
-        <div>
+        <div className="menu">
           <button
-            onClick={() => router.push('/dashboard')} // Redirige a la página de inicio
-            style={{ marginRight: '10px', padding: '10px', background: 'none', border: '1px solid white', color: 'white', cursor: 'pointer' }}
+            onClick={() => setMenuOpen(!menuOpen)} // Alternar visibilidad del menú
+            style={{
+              padding: '10px',
+              background: 'none',
+              border: '1px solid white',
+              color: 'white',
+              cursor: 'pointer',
+            }}
           >
-            Inicio
+            ☰
           </button>
-          <button
-            onClick={() => router.push('/perfil')} // Redirige a la página de perfil
-            style={{ padding: '10px', background: 'none', border: '1px solid white', color: 'white', cursor: 'pointer' }}
-          >
-            Perfil
-          </button>
+          {menuOpen && (
+            <div style={{
+              position: 'absolute',
+              top: '50px',
+              right: '20px',
+              backgroundColor: '#3498db',
+              border: '1px solid white',
+              borderRadius: '5px',
+              zIndex: 100,
+            }}>
+              <button
+                onClick={() => {
+                  router.push('/dashboard');
+                  setMenuOpen(false);
+                }}
+                style={{
+                  display: 'block',
+                  padding: '10px',
+                  color: 'white',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                }}
+              >
+                Inicio
+              </button>
+              <button
+                onClick={() => {
+                  router.push('/perfil');
+                  setMenuOpen(false);
+                }}
+                style={{
+                  display: 'block',
+                  padding: '10px',
+                  color: 'white',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                }}
+              >
+                Perfil
+              </button>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -124,10 +173,13 @@ export default function NewVideoPage() {
         padding: '20px',
         textAlign: 'center',
         color: 'white',
-        marginBottom: '20px'
+        marginBottom: '20px',
       }}>
         <h1>Guardar un Nuevo Video</h1>
-        <p>Agrega un video a tu lista</p>
+        <h2 style={{
+          fontSize: '20px',
+          color: '#fff',
+        }}>Agrega un video a tu lista</h2>
       </div>
 
       {/* Campos del formulario */}

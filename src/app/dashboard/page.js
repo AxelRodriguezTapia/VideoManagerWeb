@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { db, auth } from '../lib/firebaseConfig'; // Asegúrate de importar la configuración de Firebase
-import { getDocs, collection, doc, getDoc,setDoc,arrayUnion,arrayRemove } from 'firebase/firestore';
+import { getDocs, collection, doc, getDoc, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import VideoCard from '../components/VideoCard'; // Asegúrate de tener este componente
 
@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [selectedList, setSelectedList] = useState(''); // Lista seleccionada
   const [errorMsg, setErrorMsg] = useState(null); // Mensaje de error
   const [favoriteVideos, setFavoriteVideos] = useState([]); // Estado para los videos favoritos
+  const [menuOpen, setMenuOpen] = useState(false); // Estado del menú desplegable
   const router = useRouter();
 
   const currentUser = auth.currentUser; // Usuario autenticado
@@ -21,12 +22,11 @@ export default function Dashboard() {
     if (currentUser) {
       const fetchUserData = async () => {
         try {
-          // Obtener las listas del usuario
           const listsCollectionRef = collection(db, 'userSaves', currentUser.uid, 'lists');
           const listsSnapshot = await getDocs(listsCollectionRef);
 
           if (!listsSnapshot.empty) {
-            const lists = listsSnapshot.docs.map(doc => doc.id); // Obtener los nombres de las listas
+            const lists = listsSnapshot.docs.map((doc) => doc.id); // Obtener los nombres de las listas
             setUserLists(lists);
           } else {
             setUserLists([]);
@@ -66,88 +66,133 @@ export default function Dashboard() {
     };
 
     fetchVideosFromList();
-    
-  }, [selectedList]); // Este useEffect se ejecuta cada vez que cambia selectedList
-  
+  }, [selectedList]);
 
-  // Cuando se selecciona una lista, se actualiza selectedList
   const handleListChange = (value) => {
     setSelectedList(value); // Actualizar selectedList
   };
+
   const toggleFavorite = async (video) => {
-      const userDocRef = doc(db, 'userSaves', currentUser.uid);
-      const isFavorite = favoriteVideos.some(fav => fav.url === video.url); // Verificar si el video ya es favorito
-  
-      try {
-        if (isFavorite) {
-          // Si el video ya es favorito, lo eliminamos
-          await setDoc(userDocRef, {
-            favorites: arrayRemove(video) // Usamos arrayRemove para eliminar el video del arreglo
-          }, { merge: true });
-          
-          // Actualizamos el estado local, eliminando el video de favoritos
-          setFavoriteVideos(prevState => prevState.filter(fav => fav.url !== video.url));
-        } else {
-          // Si el video no es favorito, lo agregamos
-          await setDoc(userDocRef, {
-            favorites: arrayUnion(video) // Usamos arrayUnion para agregar el video al arreglo
-          }, { merge: true });
-          
-          // Actualizamos el estado local, agregando el video a favoritos
-          setFavoriteVideos(prevState => [...prevState, video]);
-        }
-      } catch (error) {
-        console.error('Error al actualizar los favoritos:', error);
-        setErrorMsg('Hubo un error al actualizar los favoritos.');
+    const userDocRef = doc(db, 'userSaves', currentUser.uid);
+    const isFavorite = favoriteVideos.some((fav) => fav.url === video.url);
+
+    try {
+      if (isFavorite) {
+        await setDoc(
+          userDocRef,
+          {
+            favorites: arrayRemove(video),
+          },
+          { merge: true }
+        );
+
+        setFavoriteVideos((prevState) => prevState.filter((fav) => fav.url !== video.url));
+      } else {
+        await setDoc(
+          userDocRef,
+          {
+            favorites: arrayUnion(video),
+          },
+          { merge: true }
+        );
+
+        setFavoriteVideos((prevState) => [...prevState, video]);
       }
-    };
+    } catch (error) {
+      console.error('Error al actualizar los favoritos:', error);
+      setErrorMsg('Hubo un error al actualizar los favoritos.');
+    }
+  };
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: '0px' }}>
       {/* Barra de navegación superior */}
-      <nav style={{
-        backgroundColor: '#3498db',
-        padding: '10px 20px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}>
+      <nav
+        style={{
+          backgroundColor: '#3498db',
+          padding: '10px 20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold' }}>VideoListApp</div>
-        <div>
+        {/* Botón de menú para pantallas pequeñas */}
+        <div className="mobile-menu">
           <button
-            onClick={() => router.push('/favorites')} // Redirige a la página de inicio
-            style={{ marginRight: '10px', padding: '10px', background: 'none', border: '1px solid white', color: 'white', cursor: 'pointer' }}
+            onClick={() => setMenuOpen(!menuOpen)}
+            style={{
+              padding: '10px',
+              background: 'none',
+              border: '1px solid white',
+              color: 'white',
+              cursor: 'pointer',
+            }}
           >
-            Favorites
+            ☰
           </button>
-          <button
-            onClick={() => router.push('/perfil')} // Redirige a la página de perfil
-            style={{ marginRight: '10px', padding: '10px', background: 'none', border: '1px solid white', color: 'white', cursor: 'pointer' }}
-          >
-            Perfil
-          </button>
-          <button
-            onClick={() => router.push('/newVideo')} // Redirige a la página de nuevo video
-            style={{ padding: '10px', background: 'none', border: '1px solid white', color: 'white', cursor: 'pointer' }}
-          >
-            Nuevo Video
-          </button>
+          {menuOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '50px',
+                right: '20px',
+                backgroundColor: '#3498db',
+                border: '1px solid white',
+                borderRadius: '5px',
+                zIndex: '100',
+              }}
+            >
+              <button
+                onClick={() => {
+                  router.push('/favorites');
+                  setMenuOpen(false);
+                }}
+                style={{ display: 'block', padding: '10px', color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                Favorites
+              </button>
+              <button
+                onClick={() => {
+                  router.push('/perfil');
+                  setMenuOpen(false);
+                }}
+                style={{ display: 'block', padding: '10px', color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                Perfil
+              </button>
+              <button
+                onClick={() => {
+                  router.push('/newVideo');
+                  setMenuOpen(false);
+                }}
+                style={{ display: 'block', padding: '10px', color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                Nuevo Video
+              </button>
+            </div>
+          )}
         </div>
       </nav>
 
-      {/* Título y gradiente */}
-      <div style={{
-        background: 'linear-gradient(to right, #3498db, #2980b9, #1abc9c)',
-        padding: '20px',
-        textAlign: 'center',
-        color: 'white',
-        marginBottom: '20px'
-      }}>
+      <div
+        style={{
+          background: 'linear-gradient(to right, #3498db, #2980b9, #1abc9c)',
+          padding: '20px',
+          textAlign: 'center',
+          color: 'white',
+          marginBottom: '20px',
+        }}
+      >
         <h1>VideoListApp</h1>
-        <p>Lista de Videos</p>
+        <h2 style={{
+          fontSize: '20px',
+          color: '#fff',
+        }}>
+          Lista de Videos
+        </h2>
       </div>
 
-      {/* Selector de listas */}
       <div style={{ marginBottom: '20px' }}>
         <label>Selecciona una lista para ver los videos:</label>
         {userLists.length > 0 ? (
@@ -156,9 +201,13 @@ export default function Dashboard() {
             value={selectedList}
             style={{ padding: '10px', fontSize: '16px', width: '100%' }}
           >
-            <option value="" disabled>Selecciona una lista</option>
+            <option value="" disabled>
+              Selecciona una lista
+            </option>
             {userLists.map((list, index) => (
-              <option key={index} value={list}>{list}</option>
+              <option key={index} value={list}>
+                {list}
+              </option>
             ))}
           </select>
         ) : (
@@ -166,19 +215,19 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Mostrar videos de la lista seleccionada */}
       <div style={{ marginBottom: '20px' }}>
         {userVideos.length > 0 ? (
           userVideos.map((video, index) => (
             <VideoCard
-          key={index}
-          videoUrl={video.url}
-          title={video.title}
-          createdAt={video.createdAt}
-          description={video.description}
-          onToggleFavorite={() => toggleFavorite(video)}  // Usamos esta función de toggle para los favoritos
-          isFavorite={favoriteVideos.some(fav => fav.url === video.url)}  // Comprobamos si el video está en favoritos
-        />
+              key={index}
+              videoUrl={video.url}
+              title={video.title}
+              createdAt={video.createdAt}
+              description={video.description}
+              onToggleFavorite={() => toggleFavorite(video)}
+              isFavorite={favoriteVideos.some((fav) => fav.url === video.url)}
+              selectedList={selectedList}
+            />
           ))
         ) : (
           <p>No hay videos en esta lista.</p>
